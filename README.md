@@ -4,7 +4,7 @@
 
 # TP1
 
-## Repositorio de (Nombre Apellido) - (Padrón) - (Mail)
+## Repositorio de Lucas Aldonate - 100030 - laldonate@fi.uba.ar
 
 - Para compilar:
 
