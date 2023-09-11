@@ -20,6 +20,11 @@ struct info_pokemon {
 	size_t capacidad;
 };
 
+/**
+ * Determina el tipo de pokemon a partir de un caracter y lo devuelve.
+ * 
+ * En caso de que el caracter no sea válido, devuelve -1.
+ */
 enum TIPO tipo_pokemon(const char tipo)
 {
 	switch (tipo) {
@@ -40,6 +45,11 @@ enum TIPO tipo_pokemon(const char tipo)
 	}
 }
 
+/**
+ * En caso de que los ataques no sean válidos, libera la memoria y
+ * devuelve NULL.
+ */
+
 informacion_pokemon_t *ataques_invalidos(informacion_pokemon_t *ip,
 					 FILE *archivo)
 {
@@ -53,6 +63,10 @@ informacion_pokemon_t *ataques_invalidos(informacion_pokemon_t *ip,
 	return NULL;
 }
 
+/**
+ * En caso de que el tipo no sea válido, libera la memoria y
+ * devuelve el vector con la info acumulada hasta dicho momento.
+ */
 informacion_pokemon_t *tipo_invalido(informacion_pokemon_t *ip, FILE *archivo)
 {
 	fclose(archivo);
@@ -63,6 +77,9 @@ informacion_pokemon_t *tipo_invalido(informacion_pokemon_t *ip, FILE *archivo)
 	return ip;
 }
 
+/**
+ * Intercambia la posición de dos pokemones.
+ */
 void cambiar_posicion(pokemon_t *xp, pokemon_t *yp)
 {
 	pokemon_t temp = *xp;
@@ -70,6 +87,9 @@ void cambiar_posicion(pokemon_t *xp, pokemon_t *yp)
 	*yp = temp;
 }
 
+/**
+ * Ordena los pokemones por orden alfabético.
+ */
 void bubble_sort(pokemon_t **pokemones, int cantidad)
 {
 	int i, j;
@@ -128,9 +148,17 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 	while (fgets(linea, sizeof(linea), archivo) != NULL) {
 		if (info->cantidad >= info->capacidad) {
 			info->capacidad *= 2;
-			info->pokemones =
+			pokemon_t **aux_pokemones =
 				realloc(info->pokemones,
 					info->capacidad * sizeof(pokemon_t *));
+
+			if (info->pokemones == NULL) {
+				fclose(archivo);
+				free(info->pokemones);
+				return info;
+			}
+
+			info->pokemones = aux_pokemones;
 		}
 
 		info->pokemones[info->cantidad] = malloc(sizeof(pokemon_t));
