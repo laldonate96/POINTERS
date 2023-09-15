@@ -9,25 +9,25 @@
 - Para compilar:
 
 ```bash
-gcc pruebas_chanutron.c -o <nombre>
+make pruebas_chanutron
 ```
 
 - Para ejecutar:
 
 ```bash
-./<nombre>
+./pruebas_chanutron
 ```
 
 - Para ejecutar con valgrind:
 ```bash
-valgrind --leak-check=full --track-origins=yes --show-reachable=yes --error-exitcode=2 --show-leak-kinds=all --trace-children=yes ./<nombre>
+make valgrind-chanutron
 ```
 ---
 ##  Funcionamiento
 
 ### Función principal:
 
-El programa recibe un archivo el cuál intetna abrir en caso de ser válido. Si se logra abrir, se aloja memoria para el vector de pokemones. Se lee linea por linea
+El programa recibe un archivo el cuál intenta abrir en caso de ser válido. Si se logra abrir, se aloja memoria para el vector de pokemones. Se lee linea por linea
 guardando los valores de cada linea en cada iteración, se guardan dichos datos en el vector en caso de ser posible y en caso contrario se utiliza un realloc 
 (el cuál a su vez utiliza una variable auxiliar en caso de fallos), para agrandar el vector y poder seguir guardando los datos de los pokemones. El programa
 continua siempre y cuando no se encuentren errores o hasta llegar al final del archivo.
@@ -44,6 +44,7 @@ dependiendo de lo leído en el archivo y por último una función de ordenamient
 utiliza una función que simplemente sirve para intercambiar dos valores en el vector.
 A continuación se listan dichas funciones:
 
+- Función para ataques inválidos:
 ```c
 informacion_pokemon_t *ataques_invalidos(informacion_pokemon_t *ip,
 					 FILE *archivo)
@@ -59,6 +60,7 @@ informacion_pokemon_t *ataques_invalidos(informacion_pokemon_t *ip,
 }
 ```
 
+- Función para tipo inválido:
 ```c
 informacion_pokemon_t *tipo_invalido(informacion_pokemon_t *ip, FILE *archivo)
 {
@@ -71,8 +73,7 @@ informacion_pokemon_t *tipo_invalido(informacion_pokemon_t *ip, FILE *archivo)
 }
 ```
 
-
-
+- Función para determinar tipo:
 ```c
 enum TIPO tipo_pokemon(const char tipo)
 {
@@ -95,6 +96,7 @@ enum TIPO tipo_pokemon(const char tipo)
 }
 ```
 
+- Función para intercambiar posición:
 ```c
 void cambiar_posicion(pokemon_t *xp, pokemon_t *yp)
 {
@@ -105,6 +107,7 @@ void cambiar_posicion(pokemon_t *xp, pokemon_t *yp)
 
 ```
 
+- Función de ordenamiento `bubble_sort`:
 ```c
 void bubble_sort(pokemon_t **pokemones, int cantidad)
 {
@@ -129,22 +132,91 @@ void bubble_sort(pokemon_t **pokemones, int cantidad)
 }
 ```
 
-En el archivo `sarasa.c` la función `funcion1` utiliza `realloc` para agrandar la zona de memoria utilizada para conquistar el mundo. El resultado de `realloc` lo guardo en una variable auxiliar para no perder el puntero original en caso de error:
+### Variables auxiliares:
+
+Para determinar los distintos tipos (tanto de ataques como de pokemon), se 
+utilizan variables auxiliares:
 
 ```c
-int *vector = realloc(vector_original, (n+1)*sizeof(int));
+char aux_tipo_pokemon[20];
 
-if(vector == NULL)
-    return -1;
-vector_original = vector;
+char aux_tipo_ataques[MAX_ATAQUES][20];
 ```
 
+Dichas variables almacenan temporalmente el caracter leído para luego ser pasadas como parametro a la función `tipo_pokemon` con el fin de determinar el tipo. Ejemplo:
+
+```c
+leidos = sscanf(linea, "%[^;];%[^;]",
+        info->pokemones[info->cantidad]->nombre,
+        aux_tipo_pokemon);
+
+if (leidos != 2) {
+    fclose(archivo);
+    return info;
+}
+
+info->pokemones[info->cantidad]->tipo =
+    tipo_pokemon(aux_tipo_pokemon[0]);
+```
+
+Por otro lado, también se utiliza una variable auxiliar a la hora de utilizar realloc, para prevenir el caso de que realloc falle. Ejemplo:
+
+```c
+if (info->cantidad >= info->capacidad) {
+    info->capacidad *= 2;
+    pokemon_t **aux_pokemones =
+        realloc(info->pokemones,
+            info->capacidad * sizeof(pokemon_t *));
+
+    if (info->pokemones == NULL) {
+        fclose(archivo);
+        free(info->pokemones);
+        return info;
+    }
+
+info->pokemones = aux_pokemones;
+}
+```
+
+### Diagramas de memoria:
+
+En el siguiente diagrama se observa como se comporta en memoria la estructura principal del programa (info_pokemon). Vemos que la estructura
+se inicializa con una cantidad de 0 y una capacidad de 1 (la cuál irá aumentando a medida que agrandemos el vector con realloc). Esta estructura
+posee un puntero doble a pokemones, en el cual cada puntero de dicho vector apunta a un pokemon distinto con tres ataques cada uno.
 
 <div align="center">
-<img width="70%" src="img/diagrama2.svg">
+<img width="70%" src="img/diagrama_ip.svg">
+</div>
+
+En cuanto al uso de realloc, el programa verifica cada vez que se quiera proceder a leer un pokemon para luego insertarlo en el vector, si la 
+capacidad actual lo permite, caso contrario, se utiliza realloc para agrandar la capacidad al doble de la actual. Se utiliza un vector 
+auxiliar ya que es una buena practica a la hora de utilizar esta operación en caso de que realloc falle.
+
+<div align="center">
+<img width="70%" src="img/diagrama_realloc.svg">
 </div>
 
 ---
 
 ## Respuestas a las preguntas teóricas
-Incluír acá las respuestas a las preguntas del enunciado (si aplica).
+
+Respuesta 1:
+
+Para que los pokemon queden ordenados alfabéticamente, se hace uso de la función de ordenamiento "Bubblesort". Su funcionamiento es el siguienteÑ
+
+<div align="center">
+<img width="100%" src="img/bubble_sort.png">
+</div>
+
+Cabe destacar que en esta implementación de "Bubblesort", se utiliza un break para que sea apenas mas eficiente que la original, ya que en caso
+de que el loop interno no se realice ningun swap, quiere decir que la lista ya está ordenada y por ende no hay necesidad de seguir iterando.
+
+Esta función tiene una complejidad algorítmica de O(n^2). La explicación de esto es que por cada iteración del for externo que itera (n-1) veces,
+el loop interno itera (n-1-i) veces, siendo i el indice del loop externo. Debido a esto podemos decir que se realizan n operaciones (loop interno)
+por cada iteración del loop externo que a su vez tambien se repite n veces. En el infinito podemos decir que tanto (n-1) como (n-1-i) se comportan
+como n. Finalmente, n*n o mas bien n^2 nos da por resultado una complejidad algorítmica de O(n^2).
+
+
+Respuesta 2:
+
+Los diagramas se encuentran desarrollados más arriba.
