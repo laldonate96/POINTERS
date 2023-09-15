@@ -202,7 +202,7 @@ auxiliar ya que es una buena practica a la hora de utilizar esta operación en c
 
 Respuesta 1:
 
-Para que los pokemon queden ordenados alfabéticamente, se hace uso de la función de ordenamiento "Bubblesort". Su funcionamiento es el siguienteÑ
+Para que los pokemon queden ordenados alfabéticamente, se hace uso de la función de ordenamiento "Bubblesort". Su funcionamiento es el siguiente:
 
 <div align="center">
 <img width="100%" src="img/bubble_sort.png">
