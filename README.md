@@ -185,7 +185,7 @@ se inicializa con una cantidad de 0 y una capacidad de 1 (la cuál irá aumentan
 posee un puntero doble a pokemones, en el cual cada puntero de dicho vector apunta a un pokemon distinto con tres ataques cada uno.
 
 <div align="center">
-<img width="100%" src="img/diagrama_ip.png">
+<img width="70%" src="img/diagrama_ip.svg">
 </div>
 
 En cuanto al uso de realloc, el programa verifica cada vez que se quiera proceder a leer un pokemon para luego insertarlo en el vector, si la 
@@ -193,7 +193,7 @@ capacidad actual lo permite, caso contrario, se utiliza realloc para agrandar la
 auxiliar ya que es una buena practica a la hora de utilizar esta operación en caso de que realloc falle.
 
 <div align="center">
-<img width="100%" src="img/diagrama_realloc.png">
+<img width="70%" src="img/diagrama_realloc.svg">
 </div>
 
 ---
