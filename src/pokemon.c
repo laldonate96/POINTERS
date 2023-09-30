@@ -7,9 +7,12 @@
 #include <stdbool.h>
 
 #define MAX_ATAQUES 3
+#define NOMBRE 20
+#define MAX_LINEA 255
+#define READ "r"
 
 struct pokemon {
-	char nombre[20];
+	char nombre[NOMBRE];
 	enum TIPO tipo;
 	struct ataque *ataques[MAX_ATAQUES];
 };
@@ -112,13 +115,87 @@ void bubble_sort(pokemon_t **pokemones, int cantidad)
 	}
 }
 
+/**
+ * Realiza el realloc en caso de ser posible.
+ */
+bool funcion_realloc(informacion_pokemon_t *info, FILE *archivo)
+{
+	if (info->cantidad >= info->capacidad) {
+		info->capacidad *= 2;
+		pokemon_t **aux_pokemones = realloc(
+			info->pokemones, info->capacidad * sizeof(pokemon_t));
+
+		if (info->pokemones == NULL) {
+			fclose(archivo);
+			free(info->pokemones);
+			return info;
+		}
+
+		info->pokemones = aux_pokemones;
+	}
+	return false;
+}
+
+/**
+ * Inicializa un pokemon en caso de ser posible.
+ */
+
+bool inicializar_pokemon(informacion_pokemon_t *info, FILE *archivo)
+{
+	info->pokemones[info->cantidad] = malloc(sizeof(pokemon_t));
+
+	if (info->pokemones[info->cantidad] == NULL) {
+		fclose(archivo);
+		free(info->pokemones);
+		free(info);
+		return NULL;
+	}
+	return false;
+}
+
+/**
+ * Inicializa un ataque en caso de ser posible.
+ */
+
+bool inicializar_ataque(informacion_pokemon_t *info, int i, FILE *archivo)
+{
+	info->pokemones[info->cantidad]->ataques[i] =
+		malloc(sizeof(struct ataque));
+
+	if (info->pokemones[info->cantidad]->ataques[i] == NULL) {
+		fclose(archivo);
+		free(info->pokemones);
+		free(info);
+		return NULL;
+	}
+
+	return false;
+}
+
+/**
+ * Obtiene los ataques de un pokemon en caso de ser posible.
+ */
+int obtener_ataques(char linea[MAX_LINEA], char aux_tipo_ataques[][NOMBRE],
+		    informacion_pokemon_t *info, FILE *archivo, int leidos,
+		    int i)
+{
+	if (fgets(linea, MAX_LINEA, archivo) != NULL) {
+		leidos = sscanf(
+			linea, "%[^;];%[^;];%u",
+			info->pokemones[info->cantidad]->ataques[i]->nombre,
+			aux_tipo_ataques[i],
+			&info->pokemones[info->cantidad]->ataques[i]->poder);
+	}
+	return leidos;
+}
+
 informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 {
 	if (path == NULL) {
 		return NULL;
 	}
 
-	FILE *archivo = fopen(path, "r");
+	FILE *archivo = fopen(path, READ);
 
 	if (archivo == NULL) {
 		return NULL;
@@ -131,11 +208,11 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 		return NULL;
 	}
 
-	char aux_tipo_pokemon[20];
+	char aux_tipo_pokemon[NOMBRE];
 
-	char aux_tipo_ataques[MAX_ATAQUES][20];
+	char aux_tipo_ataques[MAX_ATAQUES][NOMBRE];
 
-	char linea[255];
+	char linea[MAX_LINEA];
 
 	int leidos;
 
@@ -143,25 +220,18 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 
 	info->capacidad = 1;
 
-	info->pokemones = malloc(info->capacidad * sizeof(pokemon_t *));
+	info->pokemones = malloc(info->capacidad * sizeof(pokemon_t));
+
+	if (info->pokemones == NULL) {
+		fclose(archivo);
+		free(info);
+		return NULL;
+	}
 
 	while (fgets(linea, sizeof(linea), archivo) != NULL) {
-		if (info->cantidad >= info->capacidad) {
-			info->capacidad *= 2;
-			pokemon_t **aux_pokemones =
-				realloc(info->pokemones,
-					info->capacidad * sizeof(pokemon_t *));
+		funcion_realloc(info, archivo);
 
-			if (info->pokemones == NULL) {
-				fclose(archivo);
-				free(info->pokemones);
-				return info;
-			}
-
-			info->pokemones = aux_pokemones;
-		}
-
-		info->pokemones[info->cantidad] = malloc(sizeof(pokemon_t));
+		inicializar_pokemon(info, archivo);
 
 		leidos = sscanf(linea, "%[^;];%[^;]",
 				info->pokemones[info->cantidad]->nombre,
@@ -176,19 +246,10 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 			tipo_pokemon(aux_tipo_pokemon[0]);
 
 		for (int i = 0; i < MAX_ATAQUES; i++) {
-			info->pokemones[info->cantidad]->ataques[i] =
-				malloc(sizeof(struct ataque));
+			inicializar_ataque(info, i, archivo);
 
-			if (fgets(linea, sizeof(linea), archivo) != NULL) {
-				leidos = sscanf(linea, "%[^;];%[^;];%u",
-						info->pokemones[info->cantidad]
-							->ataques[i]
-							->nombre,
-						aux_tipo_ataques[i],
-						&info->pokemones[info->cantidad]
-							 ->ataques[i]
-							 ->poder);
-			}
+			leidos = obtener_ataques(linea, aux_tipo_ataques, info,
+						 archivo, leidos, i);
 
 			if (leidos != MAX_ATAQUES)
 				return ataques_invalidos(info, archivo);
@@ -207,6 +268,8 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 	}
 
 	fclose(archivo);
+
+	bubble_sort(info->pokemones, info->cantidad);
 
 	return info;
 }
@@ -268,8 +331,6 @@ int con_cada_pokemon(informacion_pokemon_t *ip, void (*f)(pokemon_t *, void *),
 
 	if (ip == NULL)
 		return 0;
-
-	bubble_sort(ip->pokemones, ip->cantidad);
 
 	int i;
 
