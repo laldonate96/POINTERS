@@ -207,6 +207,7 @@ Para que los pokemon queden ordenados alfabéticamente, se hace uso de la funci�
 <div align="center">
 <img width="100%" src="img/bubble_sort.png">
 </div>
+Fuente: "https://www.computersciencebytes.com/sorting-algorithms/bubble-sort/"
 
 Cabe destacar que en esta implementación de "Bubblesort", se utiliza un break para que sea apenas mas eficiente que la original, ya que en caso
 de que el loop interno no se realice ningun swap, quiere decir que la lista ya está ordenada y por ende no hay necesidad de seguir iterando.
